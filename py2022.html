@@ -1,0 +1,488 @@
+<html>
+  <head>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/css/reveal.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/css/theme/black.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/monokai.min.css">
+  </head>
+  <style type="text/css">
+	.reveal h1,
+	.reveal h2,
+	.reveal h3,
+	.reveal h4,
+	.reveal h5,
+	.reveal h6 {
+	  text-transform: none;
+	}
+	.reveal h1{font-size:40pt;}
+	.reveal h2{font-size:35pt;}
+	.reveal h3{font-size:30pt;}
+	.reveal h4{font-size:25pt;}
+	.reveal h5{font-size:20pt;}
+	.reveal h6{font-size:15pt;}
+	.reveal li{font-size:25pt;}
+  </style>
+  <body>
+	<div class="reveal">
+	  <div class="slides">
+
+		<section data-markdown data-separator=">>>" data-separator-vertical="---$">
+			<script type="text/template">
+
+## 2022° Python 講座<br><br>企画私案
+<br>
+2022/4/27
+>>>
+
+### １．昨年の講座の振り返り
+* 導入の敷居が高い印象を与えた
+	* 実行環境の設定に手間取った
+	* venv は猫に小判
+	* VSCode はデフォルトで使っても良かった (？) 
+* 受講者の実力を尊重し過ぎた
+* 自問・自答と講評はやや散漫
+>>> 
+
+### ２．本年度の講座のテーマ
+# <span style="color:yellow">基礎固め！</span> 
+1. 徹底解説
+	* テキストファイルの読込
+	* データの加工 ― 基礎構文を中心に ―
+	* 加工データの画面出力
+2. [類題による演習](py2022.html#/6)（漫然と聴講されないよう課題は予告）
+	* 令和元年東日本豪雨時の[野口観測所（那珂川）の水位時系列](noguchi.html)から任意の水位を超過した時間帯と経過時間を抽出
+>>>
+
+### ３．徹底解説
+* 長良川の定期横断測量成果（csv ファイル）を素材とする
+	* [河川定期縦横断データ作成ガイドライン](guideline.html)準拠
+	* 58,440 行，278 断面
+* 次頁の順番で徐々にレベルアップ
+* python らしい記法の習得
+* どこに力点を置くかは受講者の反応を見て判断
+>>>
+
+1. [距離標の一覧](py2022.html#/5)（open）
+1. [距離標の一覧](py2022.html#/5/1)（csv.readr）
+1. [最深河床位の縦断分布](py2022.html#/5/2)（if，print）
+1. 洗堀箇所の横断図のプレヴュー（matplotlib）
+1. [低水路幅の縦断分布](py2022.html#/5/5)（list）
+1. [低水路平均河床位の縦断分布](py2022.html#/5/6)（def）
+1. 諸量の一縦断分布（class 基礎）
+1. [諸量の縦断分布](py2022.html#/5/7)（class 実装、モジュール化）
+>>>
+
+距離標の一覧
+```Python
+f = open("sample.csv") # = open("sample.csv", "r") "r" は省略可
+while True: # 無条件に以下を繰り返す
+	row = f.readline()  # 行の読込
+	if row == "":
+		break # 空行（ファイルの終端）の場合 While ループを抜ける
+	cols = row.split(",") # カンマ区切りで文字列の配列に展開
+	kp = cols[0]		 # 距離標（1 カラム目）
+	count = int(cols[6]) # 測点数（7 カラム目）整数に変換
+	flag = cols[11]	  # 構造物フラグ（12 カラム目）
+	for _ in range(count):  # 測点数回読み飛ばす
+		f.readline()
+	if flag != "0": # 構造物データが含まれていたら読み飛ばす
+		f.readline()
+	print(kp) # 距離標を画面に出力
+f.close() # ファイルを閉じる
+```
+##### basic や fortran には無い <span style="color:yellow">*obj.method(arg)*</span> の記法
+##### 要点中の要点。されど初心者に上手く伝えるのが難しい</span>
+---
+
+距離標の一覧（csv.reader）
+```Python
+import csv # csv モジュールの使用宣言
+with open("sample.csv") as f: # 以下の処理が終わったら自動的にファイルを閉じる
+	csvReader = csv.reader(f) # ファイルハンドラ f は csv として扱う
+	while True:
+		try: # 試行
+			cols = next(csvReader)  # 次の行を読込んで文字列の配列に展開
+			kp = cols[0]			# 展開に失敗したら StopIteration を通知
+			count = int(cols[6])
+			flag = cols[11]
+			for _ in range(count):
+				f.readline() #  展開不要なので単純に読み飛ばし
+			if flag != "0":
+				f.readline()
+			print(kp)
+		except StopIteration:
+			break # while ループから抜ける
+```
+定石
+---
+
+最深河床位の縦断分布
+```Python
+import sys # sys パッケージの使用宣言
+import os  # os パッケージの使用宣言
+import csv
+def main(csvFile):
+	distance = 0 # 累加距離の初期値
+	with open(csvFile) as f:
+		csvReader = csv.reader(f)
+		while True:
+			try:
+				basic = next(csvReader)
+				kp = basic[0]
+				count = int(basic[6])
+				flag = basic[11]
+				zmin = 9999 # 最深河床高の初期値
+				for _ in range(count):
+					z = float(next(csvReader)[2]) # 標高（測点データの 3 カラム目）
+					if z < zmin:
+						zmin = z # 最深河床高の暫定値
+				distance += float(basic[1]) # 累加距離
+				print(f'{kp}\t{distance}\t{zmin}') # 結果の出力。区切り文字はタブ
+				if flag != "0":
+					f.readline()
+			except StopIteration:
+				break
+if __name__ == "__main__": # このモジュールが Python の引数として与えられた時に該当
+	if len(sys.argv) == 2: # 2 つの引数が与えられた時に該当
+		main(sys.argv[1])  # 2 つ目の引数はファイル名
+	else:
+		msg = '''
+使用方法
+  py {} ファイル名'''.format(os.path.basename(__file__)) # os パッケージの例
+		sys.exit(msg)  # msg を出力して終了
+```
+下頁は縦断図
+---
+
+クリップボードに出力 → excel で描画<br>
+非定型で体裁に拘るなら馴れた excel の方が楽
+![](fig1.png)
+
+下頁は 19.5 km の横断図
+---
+
+極端な洗堀箇所の横断図を matplotlib で描画
+![](fig2.png)
+
+ラフに可視化する時に強力
+---
+
+低水路幅の縦断分布
+```Python
+import os
+import sys
+import csv
+def main(csvFile):
+	typeSelect = 12 # 水際杭の測点属性値
+	distance = 0
+	with open(csvFile) as f:
+		csvReader = csv.reader(f)
+		while True:
+			try:
+				basic = next(csvReader)
+				kp = basic[0]
+				count = int(basic[6])
+				distance += float(basic[1])
+				types = []; xs = [] # 空の配列
+				for _ in range(count):
+					point = next(csvReader)	 # 測点データ
+					types.append(int(point[0])) # 測点属性
+					xs.append(float(point[1]))  # 横距
+				if types.count(typeSelect) == 2: # 測点属性の配列中に指定したもの 2 つあるか
+					il = types.index(typeSelect) # 左岸低水路肩の測点番号
+					ir = -list(reversed(types)).index(typeSelect) - 1 # 右岸低水路肩の測点番号（負）
+					width = xs[ir] - xs[il]
+				else:
+					width = "" # width の型は右辺の型で決まる
+				print(f'{kp}\t{distance}\t{width}') # 低水路幅の出力
+				if basic[11] != "0":
+					f.readline()
+			except StopIteration:
+				break
+if __name__ == "__main__":
+	if len(sys.argv) == 2:
+		main(sys.argv[1])
+	else:
+		msg = '''
+使用方法
+  py {} ファイル名'''.format(os.path.basename(__file__))
+		sys.exit(msg)
+```
+配列（文字列含む）に対して多様な操作が可能<br> ← Python の利点のひとつ
+---
+
+低水路平均河床位の縦断分布
+```Python
+import os
+import sys
+import csv
+def Zave(xs, zs, il, ir, H = None): # H は省略可
+	if H is None:
+		H = min([zs[il], zs[ir]]) # 何れか低位
+	elif H < min(zs): # 無効な基準水位
+		return None
+	x1 = xs[il]
+	h1 = H - zs[il] # 水深
+	t1 = h1 > 0 # 水面下か否か
+	area = 0; b, e = il + 1, ir + 1
+	for x2, z2 in zip(xs[b:e], zs[b:e]): # 測点 il + 1 から ir までの座標
+		h2 = H - z2
+		t2 = h2 > 0
+		if x2 > x1: # オーバーハング無視
+			if t1 and t2: # 両測点とも水面下
+				area += (x2 - x1) * (h1 + h2) / 2
+			elif t1: # 左岸側の測点のみ水面下
+				dx = (x2 - x1) * h1 / (h1 - h2)
+				area += h1 * dx / 2
+			elif t2: # 右岸側の測点のみ水面下
+				dx = (x2 - x1) * h2 / (h2 - h1)
+				area += h2 * dx / 2
+		x1, h1, t1 = x2, h2, t2 # 入れ替え
+	return H - area / (xs[ir] - xs[il])
+def main(csvFile):
+	typeSelect = 12
+	distance = 0
+	with open(csvFile) as f:
+		csvReader = csv.reader(f)
+		while True:
+			try:
+				basic = next(csvReader)
+				kp = basic[0]
+				count = int(basic[6])
+				distance += float(basic[1])
+				types = []; xs = []; zs = []
+				for _ in range(count):
+					point = next(csvReader)
+					types.append(  int(point[0]))
+					xs.append(float(point[1]))
+					zs.append(float(point[2])) # 河床位
+				if types.count(typeSelect) == 2:
+					il = types.index(typeSelect)
+					ir = -list(reversed(types)).index(typeSelect) - 1
+					zave = Zave(xs, zs, il, ir) # Zave 関数で平均河床高位を計算
+				else:
+					zave = ""
+				print(f'{kp}\t{distance}\t{zave}')
+				if basic[11] != "0":
+					next(csvReader)
+			except StopIteration:
+				break
+if __name__ == "__main__":
+	if len(sys.argv) == 2:
+		main(sys.argv[1])
+	else:
+		msg = '''
+使用方法
+  py {} ファイル名'''.format(os.path.basename(__file__))
+		sys.exit(msg)
+```
+def 文の基礎
+---
+
+諸量の縦断分布
+```Python
+import os
+import sys
+from shareRiver import guidline # shareRiver.py で定義されている guidline クラスを使用
+def main(fileName):
+	g = guidline(fileName) # guidline クラスを作成
+	print('距離標\t追加距離\t低水路幅\t最深河床位\t低水路平均河床位')
+	distance = 0
+	while g.readCrossSection():
+		distance += g.interval
+		if g.hasBothEnd():
+			print('{}\t{}\t{}\t{}\t{}'.format(
+				g.kiloPost, distance, g.Width(), g.Zmin, g.Zave()))
+		else:
+			print(f'{g.kiloPost}\t{distance}\t\t\t')
+if __name__ == "__main__":
+	if len(sys.argv) == 2:
+		main(sys.argv[1])
+	else:
+		msg = '''
+使用方法
+  py {} ファイル名'''.format(os.path.basename(__file__))
+		sys.exit(msg)
+```
+
+###### [guideline クラスの機能](shareRiver.html#guidline)さえ分かればエンドユーザーにとっては最も安易
+###### <span style="color:yellow">guideline</span> を <span style="color:yellow">csJson</span> に変えれば [csJson クラス](shareRiver.html#csJson)でも全く同じコードで動く
+---
+
+shareRiver.py
+```Python
+__version__ = "1.0.0"
+__date__    = "May 2022"
+import csv
+import json
+class crossSection:
+    def __init__(self, kiloPost, interval, cordinates):
+        self._kiloPost = kiloPost
+        self._interval = interval
+        self._cordinates = cordinates
+        self._Zmin = min([p[1] for p in cordinates])
+    @property
+    def kiloPost(self):
+        return self._kiloPost
+    @property
+    def interval(self):
+        return self._interval
+    @property
+    def Zmin(self):
+        return self._Zmin
+    def Width(self, il, ir):
+        if il is None or ir is None:
+            return None
+        else: 
+            return self._cordinates[ir][0] - self._cordinates[il][0]
+    def Zave(self, il, ir, H = None):
+        if il is None or ir is None:
+            return None
+        if H is None:
+            H = min([self._cordinates[il][1], self._cordinates[ir][1]])
+        elif H < self.Zmin:
+            return None
+        b, e = il + 1, ir + 1
+        x1 = self._cordinates[il][0]
+        h1 = H - self._cordinates[ir][1]
+        t1 = h1 > 0
+        area = 0
+        for (x2, z2) in self._cordinates[b:e]:
+            h2 = H - z2
+            t2 = h2 > 0
+            if x2 > x1:
+                if t1 and t2:
+                    area += (x2 - x1) * (h1 + h2) / 2
+                elif t1:
+                    dx = (x2 - x1) * h1 / (h1 - h2)
+                    area += h1 * dx / 2
+                elif t2:
+                    dx = (x2 - x1) * h2 / (h2 - h1)
+                    area += h2 * dx / 2
+            x1, h1, t1 = x2, h2, t2
+        width = self._cordinates[ir][0] - self._cordinates[il][0]
+        return H - area / width
+class guidline(crossSection):
+    def __init__(self, csvFile):
+        self.f = open(csvFile)
+        self.reader = csv.reader(self.f)
+    def readCrossSection(self):
+        try:
+            basic = next(self.reader)
+            kiloPost = basic[0]
+            interval = float(basic[1])
+            count = int(basic[6])
+            self.types = []; cordinates = []
+            for _ in range(count):
+                point = next(self.reader)
+                self.types.append(int(point[0]))
+                cordinates.append([float(point[1]), float(point[2])])
+            if basic[11] != "0":
+                self.f.readline()
+            super().__init__(kiloPost, interval, cordinates)
+            return True
+        except StopIteration:
+            self.f.close()
+            return False
+    def hasBothEnd(self, typeSelect = 12):
+        if self.types.count(typeSelect) == 2:
+            self.il = self.types.index(typeSelect)
+            self.ir = -list(reversed(self.types)).index(typeSelect) - 1
+            return True
+        else:
+            self.il = None
+            self.ir = None
+            return False
+    def Width(self):
+        return super().Width(self.il, self.ir)
+    def Zave(self, H = None):
+        return super().Zave(self.il, self.ir, H)
+class csJson(crossSection):
+    def __init__(self, jsonFile):
+        f = open(jsonFile)
+        self.CSs = json.load(f)
+        self.index = 0
+        self.count = len(self.CSs)
+    @property
+    def evalPointLeft(self):
+        pass
+    @evalPointLeft.setter
+    def evalPointLeft(self, il):
+        self._il = il
+    @property
+    def evalPointRight(self):
+        pass
+    @evalPointRight.setter
+    def evalPointRight(self, ir):
+        self._ir = ir
+    def readCrossSection(self):
+        if self.index == self.count:
+            return False
+        else:
+            cs = self.CSs[self.index]
+            kiloPost = cs["kiloPost"]
+            interval = cs["interval"]
+            cordinates = cs["cordinates"]
+            if "evalPoints" in cs:
+                evalPoints = cs["evalPoints"]
+                self._il = evalPoints[0]
+                self._ir = evalPoints[1]
+            super().__init__(kiloPost, interval, cordinates)
+            self.index += 1
+            return True
+    def hasBothEnd(self):
+        return not(self._ir is None or self._ir is None) 
+    def Width(self):
+        return super().Width(self._il, self._ir)
+    def Zave(self, H = None):
+        return super().Zave(self._il, self._ir, H)
+```
+脱・初心者（オブジェクト指向入門）
+>>>
+４．類題による演習
+
+![](fig3.png)
+
+```sh
+exceed 4.000m 10.0 hrs  (2019-10-13 00:00 - 2019-10-13 10:00)
+```
+---
+* 基本的には例題が参考になる
+* web コンテンツを転写して作成した csv ファイルを読込む際に文字コード由来の問題が発生する可能性がある
+* 時刻をどう扱うか（datatime はヒント？）
+* 非常識な行— "2019/10/12,<span style="color:red">24:00</span>,4.13," —でつまづくのを如何様に回避するか
+* 超過する時間が無い場合の配慮
+* pandas でスッキリ書く手もある（ *df*.query() ）
+* エラーメッセージを手掛かりに<ruby><rb>ググ</rb><rt>・・</rt></ruby>って解決することを学ぶ
+		  </script>
+		</section>
+	  </div>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/lib/js/head.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/js/reveal.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/markdown/markdown.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/notes/notes.js"></script>
+
+	<script>
+	  Reveal.initialize({
+		controls: true,
+		progress: true,
+		center: true,
+		history: true,
+		plugins: [ RevealMarkdown, RevealNotes ],
+		math: {
+		  mathjax: 'https://cdn.jsdelivr.net/gh/mathjax/mathjax@2.7.8/MathJax.js',
+		  config:  'TeX-AMS_HTML-full'
+		},
+		dependencies: [
+		  {src: 'https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/highlight/highlight.js',
+			  async: true, callback: function() { hljs.initHighlightingOnLoad(); }},
+		  {src: 'https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/math/math.min.js',
+			  async: true}
+		]
+	  });
+	</script>
+  </body>
+</html>
