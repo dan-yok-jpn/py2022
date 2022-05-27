@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <style>
+      body {
+        margin: 20px;
+        padding: 0;
+      }
+      #image {
+        height: 120px;
+      }
+    </style>
+    <script type="text/javascript" src="questions.js"></script>
+    <script type="text/javascript">
+
+      var idx_p;
+      var idx_q = -1;
+      var members = [
+        {"jpg":"alexander1203_120.jpg",       "name":"aaa"},
+        {"jpg":"aya-0218-0218_120.jpg",       "name":"bbb"},
+        {"jpg":"daitahikaru-blog_120.jpg",    "name":"ccc"},
+        {"jpg":"horichiemi-official_120.jpg", "name":"ddd"},
+        {"jpg":"koizumi-takayuki_120.jpg",    "name":"eee"},
+        {"jpg":"kurori1985_120.jpg",          "name":"fff"},
+        {"jpg":"matsui-kazuyo_120.jpg",       "name":"ggg"},
+        {"jpg":"momo-minbe_120.jpg",          "name":"hhh"},
+        {"jpg":"ogata-ai_120.jpg",            "name":"iii"},
+        {"jpg":"shinobu-sakagami_120.jpg",    "name":"jjj"}
+      ];
+
+      function start() {
+        document.getElementById("name").innerHTML = "";
+        roulette = setInterval(function() {
+          idx_p = Math.floor( Math.random() * 10 );
+          document.getElementById("image").src = "img/" + members[idx_p]["jpg"];
+        }, 50);
+      }
+
+      function stop() {
+        clearInterval(roulette);
+        document.getElementById("name").innerHTML = "回答者：" + members[idx_p]["name"] + "さん";
+      }
+
+      function next() {
+        idx_q += 1;
+        if(idx_q >= qmax) return;
+        var ans = questions[idx_q]["a"];
+        document.getElementById("q").innerHTML = questions[idx_q]["q"];
+        document.getElementById("a1").innerHTML = "&nbsp;(A)&nbsp;&nbsp;" + ans[0];
+        document.getElementById("a2").innerHTML = "&nbsp;(B)&nbsp;&nbsp;" + ans[1];
+        if(ans.length == 3)
+          document.getElementById("a3").innerHTML = "&nbsp;(C)&nbsp;&nbsp;" + ans[2];
+        else
+          document.getElementById("a3").innerHTML = "&nbsp;";
+        document.getElementById("hidden").value = questions[idx_q]["c"];
+      }
+
+      function correct() {
+        var idx = document.getElementById("hidden").value
+        var id = ["a1", "a2", "a3"][idx];
+        document.getElementById(id).innerHTML += "&nbsp;&nbsp;〇"
+      }
+
+  </script>
+  </head>
+  <body onload="next()">
+    <div>
+        <table>
+          <tr>
+            <td><img id="image" src="img/alexander1203_120.jpg"></td>
+            <td>&nbsp;&nbsp;</td>
+            <td id="name"></td>
+          </tr>
+        </table>
+        <input type="button" value="start" onclick="start();"/>
+        <input type="button" value="stop"  onclick="stop();"/>
+    </div>
+    <br><br>
+    <div class="qa">
+      <input type="button" value="question" onclick="next();"/>
+      <table>
+        <tr><td id="q" >&nbsp;</td></tr>
+        <tr><td id="a1">&nbsp;</td></tr>
+        <tr><td id="a2">&nbsp;</td></tr>
+        <tr><td id="a3">&nbsp;</td></tr>
+      </table>
+      <input type="button" value="anser" onclick="correct();"/>
+      <input id="hidden" type="hidden" value="">
+    </div>
+  </body>
+</html>
