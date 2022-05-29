@@ -10,6 +10,9 @@
       #image {
         height: 120px;
       }
+      .q {
+        font-size: xx-large;
+      }
     </style>
     <script type="text/javascript" src="questions.js"></script>
     <script type="text/javascript">
@@ -80,10 +83,10 @@
     <div class="qa">
       <input type="button" value="question" onclick="next();"/>
       <table>
-        <tr><td id="q" >&nbsp;</td></tr>
-        <tr><td id="a1">&nbsp;</td></tr>
-        <tr><td id="a2">&nbsp;</td></tr>
-        <tr><td id="a3">&nbsp;</td></tr>
+        <tr><td class="q" id="q" >&nbsp;</td></tr>
+        <tr><td class="q" id="a1">&nbsp;</td></tr>
+        <tr><td class="q" id="a2">&nbsp;</td></tr>
+        <tr><td class="q" id="a3">&nbsp;</td></tr>
       </table>
       <input type="button" value="anser" onclick="correct();"/>
       <input id="hidden" type="hidden" value="">
