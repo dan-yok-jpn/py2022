@@ -8,10 +8,13 @@
         padding: 0;
       }
       #image {
-        height: 120px;
+        height: 180px;
       }
       .q {
         font-size: xx-large;
+      }
+      #name {
+        font-size: x-large;
       }
     </style>
     <script type="text/javascript" src="questions.js"></script>
@@ -20,22 +23,31 @@
       var idx_p;
       var idx_q = -1;
       var members = [
-        {"jpg":"alexander1203_120.jpg",       "name":"aaa"},
-        {"jpg":"aya-0218-0218_120.jpg",       "name":"bbb"},
-        {"jpg":"daitahikaru-blog_120.jpg",    "name":"ccc"},
-        {"jpg":"horichiemi-official_120.jpg", "name":"ddd"},
-        {"jpg":"koizumi-takayuki_120.jpg",    "name":"eee"},
-        {"jpg":"kurori1985_120.jpg",          "name":"fff"},
-        {"jpg":"matsui-kazuyo_120.jpg",       "name":"ggg"},
-        {"jpg":"momo-minbe_120.jpg",          "name":"hhh"},
-        {"jpg":"ogata-ai_120.jpg",            "name":"iii"},
-        {"jpg":"shinobu-sakagami_120.jpg",    "name":"jjj"}
+        {"jpg":"A6286.jpg",    "name":"秋田麗子"},
+        {"jpg":"A6931.jpg",    "name":"清水隆博"},
+        {"jpg":"A7151.jpg",    "name":"福田悠太"},
+        {"jpg":"A8349.jpg",    "name":"近藤恭平"},
+        {"jpg":"A8350.jpg",    "name":"利根川明弘"},
+        {"jpg":"A8364.jpg",    "name":"菅田大輔"},
+        {"jpg":"A8392.jpg",    "name":"土方基由"},
+        {"jpg":"A8856.jpg",    "name":"渡邉健人"},
+        {"jpg":"A8858.jpg",    "name":"野村竜矢"},
+        {"jpg":"A8918.jpg",    "name":"鳥海秋"},
+        {"jpg":"A9112.jpg",    "name":"水戸佳祐"},
+        {"jpg":"A9160.jpg",    "name":"遠藤優斗"},
+        {"jpg":"A9168.jpg",    "name":"猪狩彬寛"},
+        {"jpg":"A9170.jpg",    "name":"砂原健汰"},
+        {"jpg":"A9214.jpg",    "name":"西俣淳一"},
+        {"jpg":"A9466.jpg",    "name":"橋本将直"},
+        {"jpg":"A9468.jpg",    "name":"田中宏明"},
+        {"jpg":"A9539.jpg",    "name":"松田朋也"},
+        {"jpg":"B0032.jpg",    "name":"迫間悠志"}
       ];
 
       function start() {
         document.getElementById("name").innerHTML = "";
         roulette = setInterval(function() {
-          idx_p = Math.floor( Math.random() * 10 );
+          idx_p = Math.floor( Math.random() * 19 );
           document.getElementById("image").src = "img/" + members[idx_p]["jpg"];
         }, 50);
       }
@@ -71,7 +83,7 @@
     <div>
         <table>
           <tr>
-            <td><img id="image" src="img/alexander1203_120.jpg"></td>
+            <td><img id="image" src="img/asahi.jpg"></td>
             <td>&nbsp;&nbsp;</td>
             <td id="name"></td>
           </tr>
