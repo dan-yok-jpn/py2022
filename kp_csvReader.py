@@ -61,6 +61,6 @@ with open("sample.csv") as f: # 以下の処理が終わったら自動的にフ
 
             print(kp)
 
-        except StopIteration:
+        except: # StopIteration:
 
             break # 読込済みなら While ループを抜ける
