@@ -11,7 +11,7 @@
 
 ## ファイル命名規約
 
-KASEN/WZYOU_A/DATA/WZ</span><span style="color:red;">***</span><span style="color:blue;">A4</span>.csv
+KASEN/WZYOU_A/DATA/WZA4</span><span style="color:red;">***</span><span style="color:blue;"></span>.csv
 
 * WZ : 定期縦横断測量（河川測量）
 * <span style="color:red;">***</span> : 測線（規定なし）
