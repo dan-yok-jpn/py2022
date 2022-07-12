@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: 現在のファイル",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            // "args": ["-from", "CTI", "src/cti.txt", "-to", "CTI", "dst/txt_2.csv"],
+            "args": ["-from", "CTI", "src/cti.txt", "-to", "CTI", "dst/txt_2.xlsx", "sheet=Sheet1"],
+            // "args": ["-from", "CTI", "src/cti.xlsx", "sheet=cti", "-to", "JSON", "dst/xls_2.json"],
+            // "args": ["-from", "JSON", "dst/txt_2.json", "-to", "CTI", "dst/json_2.txt"],
+            // "args": ["-from", "MLIT", "src/MLIT"],
+            // "args": ["-from", "MLIT", "src/syonai.csv", "-to", "MLIT", "dst"],
+        }
+    ]
+}
