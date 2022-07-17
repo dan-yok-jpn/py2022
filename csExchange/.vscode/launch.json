@@ -12,11 +12,12 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             // "args": ["-from", "CTI", "src/cti.txt", "-to", "CTI", "dst/txt_2.csv"],
-            "args": ["-from", "CTI", "src/cti.txt", "-to", "CTI", "dst/txt_2.xlsx", "sheet=Sheet1"],
+            // "args": ["-from", "CTI", "src/cti.txt", "-to", "CTI", "dst/txt_2.xlsx", "sheet=Sheet1"],
             // "args": ["-from", "CTI", "src/cti.xlsx", "sheet=cti", "-to", "JSON", "dst/xls_2.json"],
             // "args": ["-from", "JSON", "dst/txt_2.json", "-to", "CTI", "dst/json_2.txt"],
             // "args": ["-from", "MLIT", "src/MLIT"],
             // "args": ["-from", "MLIT", "src/syonai.csv", "-to", "MLIT", "dst"],
+            "args": ["-from", "NK", "src/Q2DFNU.xlsm", "-to", "NK", "nk.xlsx"],
         }
     ]
 }

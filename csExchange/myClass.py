@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import json
@@ -30,6 +32,12 @@ class CrossSections:
         else: raise Error(f"No such type : '{type}'")
 
     @staticmethod
+    def to_valiant(s):
+
+        try:    return float(s)
+        except: return s
+
+    @staticmethod
     def csv_2_xls(input, output, sheet):
 
         if os.path.exists(output):
@@ -45,13 +53,7 @@ class CrossSections:
         with open(input) as f:
             for cols in csv.reader(f):
                 for i, col in enumerate(cols):
-                    if col.isascii():
-                        try: v = int(col)
-                        except:
-                            try:    v = float(col)
-                            except: v = col
-                    else: v = col # except kansuji
-                    ws.cell(r, i + 1).value = v
+                    ws.cell(r, i + 1).value = CrossSections.to_valiant(col)
                 r += 1
 
         if not exist: ws.title = sheet
@@ -295,15 +297,123 @@ class IDEA_(CrossSection):
 class NK(CrossSections):
 
     def import_from(self, src):
-        raise Error(f"Not support yet : '{sys._getframe().f_code.co_name}'")
+
+        input = src["file"]
+        if not "." in input: raise Error(f"Invalid path : '{input}'")
+        ext = input.split(".")[-1].lower()
+        if ext == "xlsm":
+            NK.import_from_xls(self, input)
+        else:
+            raise Error(f"Class NK not has method import_from_{ext}() : {input}")
+
+    def import_from_xls(self, input):
+
+        wb = openpyxl.load_workbook(input)
+        ws = wb["横断データ"]
+        r = 2
+        while ws.cell(r, 2).value is not None:
+            obj = NK_()
+            r = obj.import_from_xls(ws, r)
+            self.csObjs.append(obj)
+
+        ws = wb["縦断データ"]
+        r = 2; idx = 0; distance = 0
+        while ws.cell(r, 2).value is not None:
+            distance += ws.cell(r, 3).value
+            self.csObjs[idx].cs["distance"] = distance
+            r += 1; idx += 1
+
+        wb.close()
 
     def export_to(self, dst):
-        raise Error(f"Not support yet : '{sys._getframe().f_code.co_name}'")
+
+        output = dst["file"]
+        if not "." in output: raise Error(f"Invalid path : '{output}'")
+        ext = output.split(".")[-1].lower()
+        if ext == "xlsx":
+            NK.export_to_xls(self, output)
+        else:
+            raise Error(f"Class NK not has method export_to_{ext}() : {output}")
+
+    def export_to_xls(self, output):
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.cell(1, 1).value = "lr"
+        ws.cell(1, 2).value = "L"
+        ws.cell(1, 3).value = "Z"
+        ws.cell(1, 4).value = "粗度係数"
+        ws.cell(1, 5).value = "境界混合係数"
+        ws.cell(1, 6).value = "樹高"
+        ws.cell(1, 7).value = "樹木境界混合係数"
+        r = 1
+        for csObj in self.csObjs:
+            cs = csObj.cs
+            llr = cs["lowerChannel"]
+            lr  = cs["levee"]
+            cordinates = cs["cordinates"]
+            r += 1
+            ws.cell(r, 2).value = self.to_valiant(cs["name"])
+            ws.cell(r, 3).value = len(cordinates)
+            ws.cell(r, 8).value = "*"
+            for i, hv in enumerate(cordinates):
+                if   i == lr[ 0]: col_1 = "l"
+                elif i == lr[ 1]: col_1 = "r"
+                elif i == llr[0]: col_1 = "lm"
+                elif i == llr[1]: col_1 = "rm"
+                else:             col_1 = ""
+                r += 1
+                ws.cell(r, 1).value = col_1
+                ws.cell(r, 2).value = hv[0]
+                ws.cell(r, 3).value = hv[1]
+        ws.title = "横断データ"
+
+        ws = wb.create_sheet()
+        ws.cell(1, 1).value = "断面番号"
+        ws.cell(1, 2).value = "断面"
+        ws.cell(1, 3).value = "区間距離(m)"
+        ws.cell(1, 4).value = "流量(m3/s)"
+        r = 1; xLast = 0
+        for i, csObj in enumerate(self.csObjs):
+            cs = csObj.cs
+            distance = cs["distance"]
+            r += 1
+            ws.cell(r, 1).value = i + 1
+            ws.cell(r, 2).value = self.to_valiant(cs["name"])
+            ws.cell(r, 3).value = distance - xLast
+            xLast = distance
+        ws.title = "縦断データ"
+
+        wb.save(output)
+        wb.close()
 
 class NK_(CrossSection):
 
     def __init__(self):
         pass
+
+    def import_from_xls(self, ws, r):
+
+        name = str(ws.cell(r, 2).value)
+        np = ws.cell(r, 3).value
+        lr = [0, np - 1]; llr = [None, None]; hvs = []
+        for i in range(np):
+            r += 1
+            col_1 = ws.cell(r, 1).value
+            if   col_1 == "l":  lr[ 0] = i
+            elif col_1 == "r":  lr[ 1] = i
+            elif col_1 == "lm": llr[1] = i
+            elif col_1 == "rm": llr[1] = i
+            h = ws.cell(r, 2).value # holizontal
+            v = ws.cell(r, 3).value # vertical
+            hvs.append([h, v])
+        self.cs = {
+            "name":         name,
+            "lowerChannel": tuple(llr),
+            "levee":        tuple(lr),
+            "cordinates":   tuple(hvs)
+        } # property "distance" is set with other sheet
+        return r + 1
 
 class MLIT(CrossSections):
 

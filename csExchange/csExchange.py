@@ -22,7 +22,7 @@ def usage(err):
 
  for example
 
-  python {basename} -frrom CTI cti.xlsx sheet=cti -to NK nk.csv
+  python {basename} -from CTI cti.xlsx sheet=cti -to NK nk.csv
 
  CAUTION !!!  'openpyxl' must be installed."""
 
@@ -66,10 +66,11 @@ if __name__ == "__main__":
     try:
         args = parseArgs(sys.argv)
         obj = CrossSections(args[0])
-        if args[1] != {}:
-            obj.export_to(args[1])
-            print(f"\n Exchange from {args[0]['file']} to {args[1]['file']}.")
-            exit(0)
+        obj.export_to(args[1])
+        print(f"\n Exchange from {args[0]['file']} to {args[1]['file']}.")
+        if args[1]["type"] == "NK":
+            print(f" Please each sheet copy to Q2DFNU.xlsm.")
+        exit(0)
     except Exception as e:
         print("\n", traceback.format_exception_only(type(e), e)[0])
         exit(1)
