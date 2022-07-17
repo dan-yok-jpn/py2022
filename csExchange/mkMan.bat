@@ -1,5 +1,5 @@
 @echo off
-set PYTHONHOME=C:\Users\nkmanager\AppData\Local\Programs\Python\Python310
+set PYTHONHOME=%USERPROFILE%\AppData\Local\Programs\Python\Python310
 set module=%~n1%
 if "%module%" == "" (
     set module=myClass
