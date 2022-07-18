@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import json
 import glob
 import csv
@@ -16,7 +15,6 @@ class CrossSections:
         type = src["type"]
         if   type == "NK":   NK.  import_from(self, src)
         elif type == "CTI":  CTI. import_from(self, src)
-        elif type == "IDEA": IDEA.import_from(self, src)
         elif type == "MLIT": MLIT.import_from(self, src)
         elif type == "JSON": JSON.import_from(self, src)
         else: raise Error(f"No such type : '{type}'")
@@ -26,7 +24,6 @@ class CrossSections:
         type = dst["type"]
         if   type == "NK":   NK.  export_to(self, dst)
         elif type == "CTI":  CTI. export_to(self, dst)
-        elif type == "IDEA": IDEA.export_to(self, dst)
         elif type == "MLIT": MLIT.export_to(self, dst)
         elif type == "JSON": JSON.export_to(self, dst)
         else: raise Error(f"No such type : '{type}'")
@@ -280,19 +277,6 @@ class CTI_(CrossSection):
             "levee":        levee,
             "cordinates":   cordinates
         }
-
-class IDEA(CrossSections):
-
-    def import_from(self, src):
-        raise Error(f"Not support yet : '{sys._getframe().f_code.co_name}'")
-
-    def export_to(self, dst):
-        raise Error(f"Not support yet : '{sys._getframe().f_code.co_name}'")
-
-class IDEA_(CrossSection):
-
-    def __init__(self):
-        pass
 
 class NK(CrossSections):
 
