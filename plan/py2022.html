@@ -49,12 +49,12 @@
 	* データの加工 ― 基礎構文を中心に ―
 	* 加工データの画面出力
 2. [類題による演習](py2022.html#/6)（漫然と聴講されないよう課題は予告）
-	* 令和元年東日本豪雨時の[野口観測所（那珂川）の水位時系列](plan/noguchi.html)から任意の水位を超過した時間帯と経過時間を抽出
+	* 令和元年東日本豪雨時の[野口観測所（那珂川）の水位時系列](noguchi.html)から任意の水位を超過した時間帯と経過時間を抽出
 >>>
 
 ### ３．徹底解説
 * 長良川の定期横断測量成果（csv ファイル）を素材とする
-	* [河川定期縦横断データ作成ガイドライン](plan/guideline.html)準拠
+	* [河川定期縦横断データ作成ガイドライン](guideline.html)準拠
 	* 58,440 行，278 断面
 * 次頁の順番で徐々にレベルアップ
 * python らしい記法の習得
@@ -161,7 +161,7 @@ if __name__ == "__main__": # このモジュールが Python の引数として�
 ---
 
 極端な洗堀箇所の横断図を matplotlib で描画
-![](plan/fig2.png)
+![](fig2.png)
 
 ラフに可視化する時に強力
 ---
@@ -304,8 +304,8 @@ if __name__ == "__main__":
 		sys.exit(msg)
 ```
 
-###### [guideline クラスの機能](plan/shareRiver.html#guidline)さえ分かればエンドユーザーにとっては最も安易
-###### <span style="color:yellow">guideline</span> を <span style="color:yellow">csJson</span> に変えれば [csJson クラス](plan/shareRiver.html#csJson)でも全く同じコードで動く
+###### [guideline クラスの機能](shareRiver.html#guidline)さえ分かればエンドユーザーにとっては最も安易
+###### <span style="color:yellow">guideline</span> を <span style="color:yellow">csJson</span> に変えれば [csJson クラス](shareRiver.html#csJson)でも全く同じコードで動く
 ---
 
 shareRiver.py
@@ -440,7 +440,7 @@ class csJson(crossSection):
 >>>
 ４．類題による演習
 
-![](plan/fig3.png)
+![](fig3.png)
 
 ```sh
 exceed 4.000m 10.0 hrs  (2019-10-13 00:00 - 2019-10-13 10:00)
