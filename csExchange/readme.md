@@ -9,15 +9,15 @@
 ```sh
  Exchange the series of cross-section datas
 
-  python csExchange.py [-h] [-from type path [sheet=name] -to type path [sheet=name]]
+  python csExchange.py [-h] [-from type path[!sheet] -to type path[!sheet]]
 
-  type : NK or CTI or IDEA or MLIT or JSON
-  path : filename or directory*  *directory allow case in type=MLIT only
-  sheet=name : if use Excel workbook
+    type  : NK or CTI or MLIT or JSON
+    path  : filename or directory*  *directory be allowed only case in type=MLIT
+    sheet : if use Excel workbook
 
- for example
+ For example
 
-  python csExchange.py -frrom CTI cti.xlsx sheet=cti -to NK nk.csv
+  python csExchange.py -from CTI cti.xlsx!cti -to NK nk.xlsx
 
  CAUTION !!!  'openpyxl' must be installed.
 ```

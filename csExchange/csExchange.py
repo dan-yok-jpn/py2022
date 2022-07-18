@@ -14,15 +14,15 @@ def usage(err):
     msg = f"""
  Exchange the series of cross-section datas
 
-  python {basename} [-h] [-from type path [sheet=name] -to type path [sheet=name]]
+  python {basename} [-h] [-from type path[!sheet] -to type path[!sheet]]
 
-  type : NK or CTI or IDEA or MLIT or JSON
-  path : filename or directory*  *directory be allowed only case in type=MLIT 
-  sheet=name : if use Excel workbook
+    type  : NK or CTI or MLIT or JSON
+    path  : filename or directory*  *directory be allowed only case in type=MLIT 
+    sheet : if use Excel workbook
 
- for example
+ For example
 
-  python {basename} -from CTI cti.xlsx sheet=cti -to NK nk.csv
+  python {basename} -from CTI cti.xlsx!cti -to NK nk.xlsx
 
  CAUTION !!!  'openpyxl' must be installed."""
 
@@ -35,26 +35,20 @@ def usage(err):
 
 def parseArgs(argv):
 
-    i = 1
-    args_src = {}; args_dst = {}
+    i = 1; args_src = {}; args_dst = {}
     while i < len(argv):
         arg = argv[i]
-        if arg == "-h":
-            usage("")
+        if   arg == "-h": usage("")
         elif arg == "-from":
             args = args_src
             i = i + 1; args["type"] = argv[i]
-            i = i + 1; args["file"] = argv[i]
+            i = i + 1; src = argv[i].split("!"); args["file"] = src[0]
+            if len(src) == 2: args["sheet"] = src[1]
         elif arg == "-to":
             args = args_dst
             i = i + 1; args["type"] = argv[i]
-            i = i + 1; args["file"] = argv[i]
-        elif "=" in arg:
-            option = arg.split("=")
-            if option[0] == "sheet":
-                args["sheet"] = option[1]
-            else:
-                usage(f"\n ERROR unknown option {arg}")
+            i = i + 1; dst = argv[i].split("!"); args["file"] = dst[0]
+            if len(dst) == 2: args["sheet"] = dst[1]
         else:
             usage(f"\n ERROR unknown option {arg}")
         i += 1
