@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import json
 import glob
 import csv
 import openpyxl
+import shutil
 
 class CrossSections:
 
@@ -83,6 +85,20 @@ class CTI(CrossSections):
         else:
             CTI.import_from_txt(self, input)
 
+        if "rough" in src:
+            rough = src["rough"]
+            input = rough["file"]
+            if not "." in input: raise Error(f"Invalid path : '{input}'")
+            ext = input.split(".")[-1].lower()
+            if ext == "xlsx":
+                if "sheet" in src: sheet = rough["sheet"]
+                else: raise Error(f"Sheet name is not given : '{input}'")
+                CTI.import_from_xls_2(self, input, sheet)
+            elif ext == "csv":
+                CTI.import_from_csv_2(self, input)
+            else:
+                raise Error(f"Not support CTI.import_from_{ext}_2()")
+
     def import_from_xls(self, input, sheet):
 
         wb = openpyxl.load_workbook(input)
@@ -95,6 +111,26 @@ class CTI(CrossSections):
             self.csObjs.append(obj)
         wb.close()
 
+    def import_from_xls_2(self, input, sheet):
+
+        wb = openpyxl.load_workbook(input)
+        ws = wb[sheet]
+        for i, cs in enumerate(self.csObjs):
+            r = i + 2
+            name = ws.cell(r, 1).value
+            if name == cs.name:
+                nhl = ws.cell(r, 2).value # left-side floodplain
+                nl  = ws.cell(r, 3).value # lower-channel
+                nhr = ws.cell(r, 4).value # right-side floodplain
+                ns  = [nhl, nl, nhr]
+                if cs.lr != cs.llr: # lower-channel & floodplain is separated
+                    cs["roughness"] = {"changeAt": cs.llr, "values": ns}
+                else:
+                    cs["roughness"] = max(ns)
+            else:
+                raise Error(f"name mismatch: {name} {cs.name}")
+        wb.close()
+
     def import_from_csv(self, input):
 
         with open(input) as f:
@@ -105,6 +141,28 @@ class CTI(CrossSections):
                 CTI_.import_from_csv(obj, f, header, nmax)
                 distance = obj.setDistance(distance)
                 self.csObjs.append(obj)
+
+    def import_from_csv_2(self, input):
+
+        with csv.reader(input) as f:
+            try:
+                next(f)
+                for cs in self.csObjs:
+                    cols = next(f)
+                    name = cols[0]
+                    if name == cs.name:
+                        nhl = float(cols[1]) # left-side floodplain
+                        nl  = float(cols[2]) # lower-channel
+                        nhr = float(cols[3]) # right-side floodplain
+                        ns  = [nhl, nl, nhr]
+                        if cs.lr != cs.llr: # lower-channel & floodplain is separated
+                            cs["roughness"] = {"changeAt": cs.llr, "values": ns}
+                        else:
+                            cs["roughness"] = max(ns)
+                    else:
+                        raise Error(f"name mismatch: {name} {cs.name}")
+            except:
+                raise Error(f"EOF read unexpectedly: {input}")
 
     def import_from_txt(self, input):
 
@@ -130,6 +188,20 @@ class CTI(CrossSections):
             CTI.export_to_csv(self, output)
         else:
             CTI.export_to_txt(self, output)
+
+        if "rough" in dst:
+            rough = dst["rough"]
+            output = rough["file"]
+            if not "." in output: raise Error(f"Invalid path : '{output}'")
+            ext = output.split(".")[-1].lower()
+            if ext == "xlsx":
+                if "sheet" in dst: sheet = rough["sheet"]
+                else: raise Error(f"Sheet name is not given : '{output}'")
+                CTI.export_to_xls_2(self, output, sheet)
+            elif ext == "csv":
+                CTI.export_to__csv_2(self, output)
+            else:
+                raise Error(f"Not support CTI.export_to_{ext}_2()")
 
     def export_to_txt(self, output, csv=False):
 
@@ -176,6 +248,33 @@ class CTI(CrossSections):
         CTI.export_to_txt(self, "tmpfile.csv", csv=True)
         self.csv_2_xls("tmpfile.csv", output, sheet)
         os.remove("tmpfile.csv")
+
+    def export_to_csv_2(self, output):
+
+        if not "roughness" in self.csObjs[0]:
+            print(f"File '{output}' not create, \
+                because non-exist datas of roughness", file=sys.stderr)
+            return False
+
+        with open(output, "w") as f:
+            print("距離標,左岸高水敷,低水路,左岸高水敷", file=f)
+            for cs in self.csObjs:
+                rough = cs["roughness"]
+                if type(rough) is object:
+                    if rough["changeAt"] == cs.llr:
+                        values = rough["values"]
+                        print(f"{cs.name},{values[0]},{values[1]},{values[2]}", file=f)
+                    else:
+                        print(f"{cs.name},?,?,?", file=f) # give up
+                else:
+                    print(f"{cs.name},{rough},{rough},{rough}", file=f)
+        return True
+
+    def export_to_xls_2(self, output, sheet):
+
+        if CTI.export_to_csv_2(self, "tmpfile.csv"):
+            self.csv_2_xls("tmpfile.csv", output, sheet)
+            os.remove("tmpfile.csv")
 
 class CTI_(CrossSection):
 
@@ -314,15 +413,16 @@ class NK(CrossSections):
         output = dst["file"]
         if not "." in output: raise Error(f"Invalid path : '{output}'")
         ext = output.split(".")[-1].lower()
-        if ext == "xlsx":
+        if ext == "xlsm":
             NK.export_to_xls(self, output)
         else:
             raise Error(f"Class NK not has method export_to_{ext}() : {output}")
 
     def export_to_xls(self, output):
 
-        wb = openpyxl.Workbook()
-        ws = wb.active
+        shutil.copyfile("template_Q2DFNU.xlsm", output)
+        wb = openpyxl.load_workbook(output, keep_vba=True)
+        ws = wb["横断データ"]
         ws.cell(1, 1).value = "lr"
         ws.cell(1, 2).value = "L"
         ws.cell(1, 3).value = "Z"
@@ -350,9 +450,8 @@ class NK(CrossSections):
                 ws.cell(r, 1).value = col_1
                 ws.cell(r, 2).value = hv[0]
                 ws.cell(r, 3).value = hv[1]
-        ws.title = "横断データ"
 
-        ws = wb.create_sheet()
+        ws = wb["縦断データ"]
         ws.cell(1, 1).value = "断面番号"
         ws.cell(1, 2).value = "断面"
         ws.cell(1, 3).value = "区間距離(m)"
@@ -366,7 +465,6 @@ class NK(CrossSections):
             ws.cell(r, 2).value = self.to_valiant(cs["name"])
             ws.cell(r, 3).value = distance - xLast
             xLast = distance
-        ws.title = "縦断データ"
 
         wb.save(output)
         wb.close()
@@ -481,7 +579,7 @@ class MLIT_(CrossSection):
 
         # ts is series of node type
         #   12 : stakes at the water's edge
-        #   13 : border between lower-channel and flood-plane
+        #   13 : border between lower-channel and flood-plain
 
         ts_r = list(reversed(ts))
         c12 = ts.count(12); c13 = ts.count(13)
@@ -517,7 +615,7 @@ class MLIT_(CrossSection):
         for i, cordinate in enumerate(cordinates):
             if   i == lr[0]:  t =  1 # levee (left  side)
             elif i == llr[1]: t = 18 # levee (right side) 
-            elif i in lr    : t = 13 # boundar between lower-channel and floodplane
+            elif i in lr    : t = 13 # boundar between lower-channel and floodplain
             else:             t =  0
             print(t, cordinate[0], cordinate[1], sep=",", file=f)
         return distance

@@ -4,7 +4,7 @@ import sys
 import traceback
 try:
     from myClass import CrossSections
-except Exception as e: # openpyxl not install
+except Exception as e: # may be openpyxl not install
     print("\n", traceback.format_exception_only(type(e), e)[0])
     sys.exit()
 
@@ -14,7 +14,8 @@ def usage(err):
     msg = f"""
  Exchange the series of cross-section datas
 
-  python {basename} [-h] [-from type path[!sheet] -to type path[!sheet]]
+  python {basename} [-h] [-from type path[!sheet] [rough=path[!sheet]]
+                          -to   type path[!sheet] [rough=path[!sheet]]]
 
     type  : NK or CTI or MLIT or JSON
     path  : filename or directory*  *directory be allowed only case in type=MLIT 
@@ -49,6 +50,10 @@ def parseArgs(argv):
             i = i + 1; args["type"] = argv[i]
             i = i + 1; dst = argv[i].split("!"); args["file"] = dst[0]
             if len(dst) == 2: args["sheet"] = dst[1]
+        elif "rough" in arg:
+            ss = arg[6:].split("!")
+            if len(ss) == 1: args["rough"] = {"file": ss[0]}
+            else:            args["rough"] = {"file": ss[0], "sheet": ss[1]}
         else:
             usage(f"\n ERROR unknown option {arg}")
         i += 1
@@ -60,10 +65,7 @@ if __name__ == "__main__":
     try:
         args = parseArgs(sys.argv)
         obj = CrossSections(args[0])
-        obj.export_to(args[1])
         print(f"\n Exchange from {args[0]['file']} to {args[1]['file']}.")
-        if args[1]["type"] == "NK":
-            print(f" Please each sheet copy to Q2DFNU.xlsm.")
         exit(0)
     except Exception as e:
         print("\n", traceback.format_exception_only(type(e), e)[0])
