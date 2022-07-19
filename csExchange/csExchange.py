@@ -65,6 +65,7 @@ if __name__ == "__main__":
     try:
         args = parseArgs(sys.argv)
         obj = CrossSections(args[0])
+        obj.export_to(args[1])
         print(f"\n Exchange from {args[0]['file']} to {args[1]['file']}.")
         exit(0)
     except Exception as e:

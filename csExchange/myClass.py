@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -144,23 +143,26 @@ class CTI(CrossSections):
 
     def import_from_csv_2(self, input):
 
-        with csv.reader(input) as f:
+        with open(input) as f:
+            reader = csv.reader(f)
             try:
                 next(f)
-                for cs in self.csObjs:
-                    cols = next(f)
+                for obj in self.csObjs:
+                    cs = obj.cs
+                    cols = next(reader)
                     name = cols[0]
-                    if name == cs.name:
-                        nhl = float(cols[1]) # left-side floodplain
-                        nl  = float(cols[2]) # lower-channel
-                        nhr = float(cols[3]) # right-side floodplain
+                    if name == cs["name"]:
+                        nhl = float(cols[1]) if cols[1] else 0 # left-side floodplain
+                        nl  = float(cols[2]) if cols[2] else 0 # lower-channel
+                        nhr = float(cols[3]) if cols[3] else 0 # right-side floodplain
                         ns  = [nhl, nl, nhr]
-                        if cs.lr != cs.llr: # lower-channel & floodplain is separated
-                            cs["roughness"] = {"changeAt": cs.llr, "values": ns}
+                        llr = cs["lowerChannel"]
+                        if llr != cs["trimAt"]:
+                            cs["roughness"] = {"changeAt": llr, "values": ns}
                         else:
                             cs["roughness"] = max(ns)
                     else:
-                        raise Error(f"name mismatch: {name} {cs.name}")
+                        raise Error(f'name mismatch: {name} {cs["name"]}')
             except:
                 raise Error(f"EOF read unexpectedly: {input}")
 
@@ -199,7 +201,7 @@ class CTI(CrossSections):
                 else: raise Error(f"Sheet name is not given : '{output}'")
                 CTI.export_to_xls_2(self, output, sheet)
             elif ext == "csv":
-                CTI.export_to__csv_2(self, output)
+                CTI.export_to_csv_2(self, output)
             else:
                 raise Error(f"Not support CTI.export_to_{ext}_2()")
 
@@ -209,10 +211,10 @@ class CTI(CrossSections):
         x_last = 0
         for csObj in self.csObjs:
             cs = csObj.cs
-            x = cs["distance"]
+            x   = cs["distance"]
+            lr  = cs["trimAt"]
             llr = cs["lowerChannel"]
-            lr  = cs["levee"]
-            c = cs["cordinates"]
+            c   = cs["cordinates"]
             n = len(c)
             d = int((x - x_last) * 1000 + 0.5) / 1000 # interval
             if csv:
@@ -251,23 +253,24 @@ class CTI(CrossSections):
 
     def export_to_csv_2(self, output):
 
-        if not "roughness" in self.csObjs[0]:
+        if not "roughness" in self.csObjs[0].cs:
             print(f"File '{output}' not create, \
                 because non-exist datas of roughness", file=sys.stderr)
             return False
 
         with open(output, "w") as f:
             print("距離標,左岸高水敷,低水路,左岸高水敷", file=f)
-            for cs in self.csObjs:
+            for obj in self.csObjs:
+                cs = obj.cs
                 rough = cs["roughness"]
                 if type(rough) is object:
-                    if rough["changeAt"] == cs.llr:
+                    if rough["changeAt"] == cs["lowerChannel"]:
                         values = rough["values"]
-                        print(f"{cs.name},{values[0]},{values[1]},{values[2]}", file=f)
+                        print(f'{cs["name"]},{values[0]},{values[1]},{values[2]}', file=f)
                     else:
-                        print(f"{cs.name},?,?,?", file=f) # give up
+                        print(f'{cs["name"]},?,?,?', file=f) # give up
                 else:
-                    print(f"{cs.name},{rough},{rough},{rough}", file=f)
+                    print(f'{cs["name"]},{rough},{rough},{rough}', file=f)
         return True
 
     def export_to_xls_2(self, output, sheet):
@@ -286,13 +289,13 @@ class CTI_(CrossSection):
         nmax = ws.cell(rb, 6).value
         try:
             llr = ws.cell(rb, 7).value.split(" ") # node nos of lower-channel
-            lr  = ws.cell(rb, 8).value.split(" ") # node nos of levee
+            lr  = ws.cell(rb, 8).value.split(" ") # node nos of effective range
         except:
             llr = (1, nmax); lr = (1, nmax)
         name         = str(ws.cell(rb,1).value).strip()
         interval     = ws.cell(rb,2).value
         lowerChannel = (int(llr[0]) - 1, int(llr[-1]) - 1)
-        levee        = (int(lr[ 0]) - 1, int(lr[ -1]) - 1)
+        trimAt       = (int(lr[ 0]) - 1, int(lr[ -1]) - 1)
 
         rb += 1; re = rb + int((nmax + 3) / 4)
         n = 0; cordinates = []
@@ -309,7 +312,7 @@ class CTI_(CrossSection):
             "name":         name,
             "distance":     interval,
             "lowerChannel": lowerChannel,
-            "levee":        levee,
+            "trimAt":       trimAt,
             "cordinates":   cordinates
         }
         return re
@@ -318,13 +321,13 @@ class CTI_(CrossSection):
 
         ll = int(header[60:65]) - 1 # node no of lower-channel (left)
         lr = int(header[65:70]) - 1 # node no of lower-channel (right)
-        l  = int(header[70:75]) - 1 # node no of levee (left)
-        r  = int(header[75:80]) - 1 # node no of levee (right)
+        l  = int(header[70:75]) - 1 # node no of effective range (left)
+        r  = int(header[75:80]) - 1 # node no of effective range (right)
 
         name         = header[:10].strip()
         interval     = float(header[10:20])
         lowerChannel = (ll, lr)
-        levee        = (l,  r )
+        trimAt       = (l,  r )
 
         n = 0; cordinates = []
         for _ in range(int((nmax + 3) / 4)):
@@ -343,7 +346,7 @@ class CTI_(CrossSection):
             "name":         name,
             "distance":     interval,
             "lowerChannel": lowerChannel,
-            "levee":        levee,
+            "trimAt":       trimAt,
             "cordinates":   cordinates
         }
 
@@ -355,7 +358,7 @@ class CTI_(CrossSection):
         name         = header[0].strip()
         interval     = float(header[1])
         lowerChannel = (llr[0] - 1, llr[-1] - 1)
-        levee        = ( lr[0] - 1,  lr[-1] - 1)
+        trimAt       = ( lr[0] - 1,  lr[-1] - 1)
 
         n = 0; cordinates = []
         for _ in range(int((nmax + 3) / 4)):
@@ -373,7 +376,7 @@ class CTI_(CrossSection):
             "name":         name,
             "distance":     interval,
             "lowerChannel": lowerChannel,
-            "levee":        levee,
+            "trimAt":       trimAt,
             "cordinates":   cordinates
         }
 
@@ -430,13 +433,24 @@ class NK(CrossSections):
         ws.cell(1, 5).value = "境界混合係数"
         ws.cell(1, 6).value = "樹高"
         ws.cell(1, 7).value = "樹木境界混合係数"
+        if "roughness" in self.csObjs[0].cs: hasRough = True
+        else:                                hasRough = False
         r = 1
         for csObj in self.csObjs:
             cs = csObj.cs
             llr = cs["lowerChannel"]
-            lr  = cs["levee"]
+            lr  = cs["trimAt"]
             cordinates = cs["cordinates"]
-            r += 1
+            if hasRough:
+                rough = cs["roughness"]
+                if type(rough) is object:
+                    ats = rough["changeAt"] + [lr[1]]
+                    ns  = rough["values"]
+                else:
+                    ats = [lr[1]]
+                    ns  = [rough]
+            else:   ats = [len(cordinates)] # never match
+            r += 1; j = 0
             ws.cell(r, 2).value = self.to_valiant(cs["name"])
             ws.cell(r, 3).value = len(cordinates)
             ws.cell(r, 8).value = "*"
@@ -450,6 +464,9 @@ class NK(CrossSections):
                 ws.cell(r, 1).value = col_1
                 ws.cell(r, 2).value = hv[0]
                 ws.cell(r, 3).value = hv[1]
+                if i == ats[j]:
+                    ws.cell(r, 4).value = ns[j]
+                    j += 1
 
         ws = wb["縦断データ"]
         ws.cell(1, 1).value = "断面番号"
@@ -479,6 +496,7 @@ class NK_(CrossSection):
         name = str(ws.cell(r, 2).value)
         np = ws.cell(r, 3).value
         lr = [0, np - 1]; llr = [None, None]; hvs = []
+        ns = []; ats = []
         for i in range(np):
             r += 1
             col_1 = ws.cell(r, 1).value
@@ -488,13 +506,25 @@ class NK_(CrossSection):
             elif col_1 == "rm": llr[1] = i
             h = ws.cell(r, 2).value # holizontal
             v = ws.cell(r, 3).value # vertical
+            n = ws.cell(r, 4).value # roughness coef.
+            if n is not None:
+                ns.append(n); ats.append(i)
             hvs.append([h, v])
+        if llr[0] is None: llr[0] = lr[0]
+        if llr[1] is None: llr[1] = lr[1]
         self.cs = {
             "name":         name,
             "lowerChannel": tuple(llr),
-            "levee":        tuple(lr),
+            "trimAt":       tuple(lr),
             "cordinates":   tuple(hvs)
         } # property "distance" is set with other sheet
+
+        sz = len(ns)
+        if sz == 1:
+            self.cs["roughness"] = ns[0]
+        elif sz != 0:
+            self.cs["roughness"] = {"changeAt": ns[:-1], "values": ns}
+
         return r + 1
 
 class MLIT(CrossSections):
@@ -570,7 +600,7 @@ class MLIT_(CrossSection):
             "name":         name,
             "distance":     interval,
             "lowerChannel": llr,
-            "levee":        lr,
+            "trimAt":       lr,
             "cordinates":   tuple(hvs)
         }
 
@@ -607,14 +637,14 @@ class MLIT_(CrossSection):
         name       = cs["name"]
         distance   = cs["distance"]
         llr        = cs["lowerChannel"]
-        lr         = cs["levee"]
+        lr         = cs["trimAt"]
         cordinates = cs["cordinates"]
         interval = distance - distance_last
         s = ",,,,,,0,,,ATTENSION_THAT_STRUCTURE_FLAG_SET_TO_ZERO"
         print(name, interval, s, sep=",", file=f)
         for i, cordinate in enumerate(cordinates):
-            if   i == lr[0]:  t =  1 # levee (left  side)
-            elif i == llr[1]: t = 18 # levee (right side) 
+            if   i == lr[0]:  t =  1 # effective range (left  side)
+            elif i == llr[1]: t = 18 # effective range (right side) 
             elif i in lr    : t = 13 # boundar between lower-channel and floodplain
             else:             t =  0
             print(t, cordinate[0], cordinate[1], sep=",", file=f)

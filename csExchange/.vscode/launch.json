@@ -17,7 +17,8 @@
             // "args": ["-from", "JSON", "dst/txt_2.json", "-to", "CTI", "dst/json_2.txt"],
             // "args": ["-from", "MLIT", "src/syonai.csv", "-to", "MLIT", "dst"],
             // "args": ["-from", "NK", "src/Q2DFNU.xlsm", "-to", "NK", "nk.xlsm"],
-            "args": ["-from", "CTI", "src/cti.txt", "rough=src/mng.csv", "-to", "NK", "nk.xlsm"],
+            // "args": ["-from", "CTI", "src/cti.txt", "rough=src/mng.csv", "-to", "NK", "nk.xlsm"],
+            "args": ["-from", "NK", "nk.xlsm", "-to", "CTI", "cs.txt", "rough=mng.csv"],
         }
     ]
 }
