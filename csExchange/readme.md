@@ -1,106 +1,66 @@
-# class を用いてファイル様式を変換する
+## csExchange
 
-今回作ったのは **csExchange.py** と **myClass.py**
+様式の異なる河道横断測量成果（水位計算の入力データ）を相互変換する。
 
-## csExchange.py
+![](img/csExchange.png)
 
-実行は
+### Requirement
 
-```sh
- Exchange the series of cross-section datas
+* python3.X（**openpyxl がインストール済みである事**）
+* csExcghange.py と template_Q2DFNU.xlsm は同一のディレクトリに配置する。
 
-  python csExchange.py [-h] [-from type path[!sheet] -to type path[!sheet]]
+### 対応している様式
 
-    type  : NK or CTI or MLIT or JSON
-    path  : filename or directory*  *directory be allowed only case in type=MLIT
-    sheet : if use Excel workbook
+#### NK
 
- For example
+* Q2DFNU.xlsm のフォーマット
 
-  python csExchange.py -from CTI cti.xlsx!cti -to NK nk.xlsx
+#### CTI
 
- CAUTION !!!  'openpyxl' must be installed.
+* 横断形状のデータは **txt**、**csv**、**xlsx** の何れか。
+後二者は **txt** の固定長データ（下図）をそれぞれの様式に変換したもの。
+
+    ![](img/cti.png)
+
+* 粗度係数のデータは **csv**。
+フィールド数：4（距離標、左岸高水敷、右岸高水敷、低水路）、ヘッダ：あり。
+
+#### MLIT
+
+* [河川定期縦横断データ作成ガイドライン](doc/guideline.md)に準拠した横断測量成果の数値データ、
+あるいは左記による各測線のデータを下流側からひとつの **csv** ファイルにまとめたもの。
+* 粗度係数のデータは含まれていない。
+
+#### [JSON](doc/csJSON.md)
+
+* 上記の 3 様式を統一した JSON
+* [nunif.py](../../readme.md) の横断データのフォーマット
+* [csEdit.xlsm](../csEdit/readme.md) の入力フォーマット
+
+### 使用方法（csExchange.xlsm）
+
+1. 右上の csExcghange ボタンをクリックして csExcghange.py の絶対パスを指定する。
+1. 変換元の様式を選択する。
+1. 横断形状データのファイル名を入力して▼ボタンをクリックする。
+あるいは右端のボタンをクリックして選択する。
+入力がエクセルのワークブックである場合は表示されるフォームでワークシートを選択する。
+1. （変換元が CTI で変換が必要な場合）
+マニングの粗度係数のデータファイル名を上条と同様に指定する。
+1. 変換先の様式を選択する。
+1. 横断形状データのファイル名を入力して▼ボタンをクリックする。
+出力をエクセルのワークブックとする場合はファイル名の末尾に
+「**\!ワークシート名**」を追加する。
+1. （変換先が CTI で変換が必要な場合）
+マニングの粗度係数を出力するファイル名を上条と同様に指定する。
+1. 「変換」ボタンをクリックする。
+
+### 使用方法（コマンドプロンプト）
+
+次のコマンドを入力する（csExchange.xlsm はこのコマンドを生成して python を起動している）。
+
+```
+python csExchange.py -from type path[!sheet] [rough=path[!sheet] -to type path[!sheet] [rough=path[!sheet]]
 ```
 
-といった感じでファイル様式が異なる河道横断データの相互変換をひとつのプログラムで可能にする。
-
-ファイル様式を指す **MLIT** は[河川定期縦横断データ](guideline.md)、**JSON** は[後述](#json)。他は社名の略号
-
-コマンドはいちいちタイプしなくても、 [.vscode/launch.json](.vscode/launch.json) にいくつか登録してあるので何れかを選べば **F5** でテストできる。
-
-
-## myClass.py
-
-**csExchange.py** の肝だけ取り出すと以下のように至ってシンプル。
-
-```Python
-from myClass import CrossSections
-
-obj = CrossSections(args[0]) # args[0] は入力ファイルのパス他
-obj.export(args[1])          # args[1] は出力ファイルのパス他
-```
-
-ここで使っている **CrossSections** クラスが **myClass.py** 内で実装されている
-（ただし、現状では **CTI**、**MLIT** と **JSON** しか扱えない...）。
-
-<span style="color: red;"> 腰をすえてコードを読解して頂くしかないが (笑)</span>、
-**CrossSections** オブジェクトは **CrossSection** オブジェクトのリスト
-**csObjs** を属性にもち、
-**CrossSection** オブジェクトは次の辞書を **cs** 属性にもつ
-（区間距離は他の測線、つまり他の **CrossSection** オブジェクトに依存するので固有の属性として不適切）。 
-
-```
-{
-    "name":         距離標 (文字列)
-    "distance":     追加距離 (実数)
-    "lowerChannel": 低水路肩の左右岸の測点番号の配列
-    "levee":        堤防肩の左右岸の測点番号の配列
-    "cordinates":   測点座標で二次元の配列
-}
-```
-
-実際の処理はそれぞれのオブジェクトの子クラス（例えば、
-**CTI**、**CTI_**）が担っている。
-
-## JSON
-
-元来、**JSON** は **Javascript** のオブジェクト型変数の記法であるが、
-これをファイルにしてデータ交換に用いるのが**世間では標準**になっている
-(**csv** のように文字・数字が何を意味するかが分からないのは不便。
-**xml** のように冗長なのは辛い)。
-
-実例は [**dst/txt_2.json**](dst/txt_2.json) をご覧頂きたい。
-
-**Python** は標準で **JSON** ファイルの入出力をサポートしている。
-
-以下は **JSON** クラスの定義を抜粋したものである。
-このように、 **JSON** ファイルを読み込む **import_from** 関数、
-**JSON** でファイル出力する **export** 関数が僅かこれだけで済む（
-他のファイル様式ではあり得ない）。
-また誰が書いてもこうなるので非常に分かりやすい。
-
-建設コンサルタントも近代化しないと、なのだが・・・。
-せめて当社内だけでも・・・。
-
-```Python
-import json
-
-class JSON(CrossSections):
-
-    def import_from(self, src):
-
-        with open(src["file"]) as f:
-            js = json.load(f)
-        for j in js:
-            obj = JSON_()
-            obj.cs = j
-            self.csObjs.append(obj)
-
-    def export_to(self, dst):
-
-        objs = []
-        for obj in self.csObjs:
-            objs.append(obj.cs)
-        with open(dst["file"], "w") as  f:
-            json.dump(objs, f)
-```
+type は上記の様式の何れか。path はファイル名ないしディレクトリ名。
+sheet はワークシート名。rough は粗度係数のデータを指す。
