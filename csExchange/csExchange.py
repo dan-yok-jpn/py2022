@@ -629,15 +629,14 @@ class MLIT_Format(CrossSection):
                ts.index(18) if 18 in ts else sz - 1)
         llr = self.set_llr(ts, hs, sz, lr)
 
-        if type == 0:
-            self.cs = {
-                "name":         name,
-                "distance":     interval,
-                "lowerChannel": llr,
-                "trimAt":       lr,
-                "cordinates":   tuple(hvs)
-            }
-        else:
+        self.cs = {
+            "name":         name,
+            "distance":     interval,
+            "lowerChannel": llr,
+            "trimAt":       lr,
+            "cordinates":   tuple(hvs)
+        }
+        if type != 0:
             cols = next(reader)
             if type == 1:
                 w = float(cols[1]); np = int(cols[2])
@@ -646,41 +645,26 @@ class MLIT_Format(CrossSection):
                 for _ in range(np):
                     pos += d
                     piers.append({"pos": pos, "w": w, "Cd": 0.8})
-                info = {
-                    "type":       "bridge",
-                    "name":       cols[0],
-                    "piers":      piers
-                }
+                self.cs += {"bridge": {"name": cols[0], "piers": piers}}
             elif type == 2:
                 info = {
-                    "type":       "weir",
-                    "天端高":     cols[0],
-                    "幅":         cols[1],
-                    "上流勾配":   cols[2],
-                    "下流勾配":   cols[3]
+                    "天端高":   cols[0],
+                    "幅":       cols[1],
+                    "上流勾配": cols[2],
+                    "下流勾配": cols[3]
                 }
+                self.cs += {"weir": info}
             elif type == 3:
-                info = {
-                    "type":       "dropwork",
-                    "落差":       cols[0]
-                }
+                self.cs += {"dropwork": {"落差": cols[0]}}
             elif type == 4:
                 info = {
-                    "type":       "submergedBridge",
                     "橋脚投影幅": cols[0],
                     "橋脚長":     cols[1],
                     "桁厚":       cols[2],
                     "桁長":       cols[3],
                     "橋脚数":     cols[4]
                 }
-            self.cs = {
-                "name":         name,
-                "distance":     interval,
-                "lowerChannel": llr,
-                "trimAt":       lr,
-                "cordinates":   tuple(hvs),
-                "structure":    info
-            }
+                self.cs += {"submergedBridge": info}
 
     @staticmethod
     def set_llr(ts, hs, sz, lr):
@@ -717,14 +701,14 @@ class MLIT_Format(CrossSection):
         llr        = cs["lowerChannel"]
         lr         = cs["trimAt"]
         cordinates = cs["cordinates"]
-        if "structure" in cs:
-            hasStructure = True
-            st = cs["structure"]; type = st["type"]
-            types = ["", "bridge", "weir", "dropwork", "submergedBridge"]
-            s = f',,,,,{types.index(type)},,,{title}'
-        else:
-            hasStructure = False
-            s = f",,,,,0,,,{title} ATTENSION_THAT_STRUCTURE_FLAG_SET_TO_ZERO"
+
+        if   "bridge"          in cs: stFlag = 1
+        elif "weir"            in cs: stFlag = 2
+        elif "dropwork"        in cs: stFlag = 3
+        elif "submergedBridge" in cs: stFlag = 4
+        else:                         stFlag = 0
+        s = f",,,,,{stFlag},,,{title}"
+
         interval = int(1000 * (distance - distance_last) + 0.5) / 1000
         sz = len(cordinates)
         print(f"{name},{interval},,,,,{sz}{s}", file=f)
@@ -736,15 +720,16 @@ class MLIT_Format(CrossSection):
             else:             t =  0
             print(t, cordinate[0], cordinate[1], sep=",", file=f)
 
-        if hasStructure:
-            if type == "bridge":
-                piers = st["piers"]
-                print(st["name"], piers[0]["w"], len(piers), sep=",", file=f)
-            else:
-                s = ""; delim = ""
-                for v in list(st.values())[1:]:
-                    s += delim + str(v); delim = ","
-                print(s, file=f)
+        if stFlag == 1: # bridge
+            st = cs["bridge"]
+            piers = st["piers"]
+            print(st["name"], piers[0]["w"], len(piers), sep=",", file=f)
+        elif stFlag > 1:
+            stKey = ["weir", "dropwork", "submergedBridge"][stFlag - 2]
+            s = ""; delim = ""
+            for v in cs[stKey].values():
+                s += delim + str(v); delim = ","
+            print(s, file=f)
 
         return distance
 
@@ -836,7 +821,6 @@ if __name__ == "__main__":
         args = parseArgs(sys.argv)
         obj = CrossSections(args[0])
         obj.export_to(args[1])
-        print(f"\n Exchange from {args[0]['file']} to {args[1]['file']}.")
         exit(0)
     except Exception as e:
         print("\n", traceback.format_exception_only(type(e), e)[0],

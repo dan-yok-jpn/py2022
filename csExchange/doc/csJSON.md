@@ -4,35 +4,34 @@
 | :-- | :-: | :-: | :-: | :-- |
 | title |  文字列  | | | タイトル |
 | crossSections | 配列 | 〇 | 〇 | 要素数 : 測線数 |
-| &nbsp;&nbsp;name | 文字列 | 〇 | | 距離標 |
-| &nbsp;&nbsp;distance | 実数 | 〇 | | 累加距離 (m) |
-| &nbsp;&nbsp;cordinates | 配列 | 〇 | 〇 | 要素数 : 節点数 |
-| &nbsp;&nbsp;&nbsp;&nbsp;cordinates[i] | 配列 | 〇 | | 要素数 : 2 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cordinates[i][0] | 実数 | 〇 | | 水平座標 (m) |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cordinates[i][1] | 実数 | 〇 | | 鉛直座標 (m) |
-| &nbsp;&nbsp;trimAt | 配列 | | | 要素数 : 2 |
-| &nbsp;&nbsp;&nbsp;&nbsp;trimAt[0] | 整数 | 〇 | | 左岸堤防肩の節点番号 |
-| &nbsp;&nbsp;&nbsp;&nbsp;trimAt[1] | 整数 | 〇 | | 右岸堤防肩の節点番号 |
-| &nbsp;&nbsp;lowerChannel | 配列 | | | 要素数 : 2 |
-| &nbsp;&nbsp;&nbsp;&nbsp;lowerChannel[0] | 整数 | 〇 | | 低水路左岸肩の節点番号 |
-| &nbsp;&nbsp;&nbsp;&nbsp;lowerChannel[1] | 整数 | 〇 | | 低水路右岸肩の節点番号 |
-| &nbsp;&nbsp;roughness または | 実数 | | | Manning の粗度係数 |
-| &nbsp;&nbsp;roughness | 辞書 | | | |
-| &nbsp;&nbsp;&nbsp;&nbsp;changeAt | 配列 | 〇 | 〇 | 要素数 : 変化点数 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;changeAt[i] | 整数  | 〇 |  | 変化点の節点番号 |
-| &nbsp;&nbsp;&nbsp;&nbsp;values | 配列 | 〇 | 〇 | 要素数 : 変化点数 + 1 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;values[i] | 実数  | 〇 |  | Manning の粗度係数 |
-| &nbsp;&nbsp;structure | 辞書 | | | |
-| &nbsp;&nbsp;&nbsp;&nbsp;bridge | 辞書 | | | |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name | 文字列 | 〇 | | 橋梁名 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;piers | 配列 | 〇 | 〇 | 要素数 : 橋脚数 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;piers[i] | 辞書 | 〇 | | |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos | 実数 | 〇 | | 水平距離 (m)<sup>＃</sup> |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w | 実数 | 〇 | | 投影幅 (m) |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cd | 実数 | 〇 | | 抵抗係数<sup>＃</sup> |
-| &nbsp;&nbsp;&nbsp;&nbsp;weir | 辞書 | | | 堰<sup>＄</sup> |
-| &nbsp;&nbsp;&nbsp;&nbsp;dropwork | 辞書 | | | 落差工<sup>＄</sup>|
-| &nbsp;&nbsp;&nbsp;&nbsp;submergedBridge | 辞書 | | | 潜水橋<sup>＄</sup> |
+| ├─ name | 文字列 | 〇 | | 距離標 |
+| ├─ distance | 実数 | 〇 | | 累加距離 (m) |
+| ├─ cordinates | 配列 | 〇 | 〇 | 要素数 : 節点数 |
+| │　└─ cordinates[i] | 配列 | 〇 | | 要素数 : 2 |
+| │　　　├─ cordinates[i][0] | 実数 | 〇 | | 水平座標 (m) |
+| │　　　└─ cordinates[i][1] | 実数 | 〇 | | 鉛直座標 (m) |
+| ├─ trimAt | 配列 | | | 要素数 : 2 |
+| │　├─ trimAt[0] | 整数 | 〇 | | 左岸堤防肩の節点番号 |
+| │　└─ trimAt[1] | 整数 | 〇 | | 右岸堤防肩の節点番号 |
+| ├─ lowerChannel | 配列 | | | 要素数 : 2 |
+| │　├─ lowerChannel[0] | 整数 | 〇 | | 低水路左岸肩の節点番号 |
+| │　└─ lowerChannel[1] | 整数 | 〇 | | 低水路右岸肩の節点番号 |
+| ├─ roughness または | 実数 | | | Manning の粗度係数 |
+| ├─ roughness | 辞書 | | | |
+| │　├─ changeAt | 配列 | 〇 | 〇 | 要素数 : 変化点数 |
+| │　│　└─ changeAt[i] | 整数  | 〇 |  | 変化点の節点番号 |
+| │　└─ values | 配列 | 〇 | 〇 | 要素数 : 変化点数 + 1 |
+| │　　　└─ values[i] | 実数  | 〇 |  | Manning の粗度係数 |
+| ├─ bridge | 辞書 | | | |
+| │　├─ name | 文字列 | 〇 | | 橋梁名 |
+| │　└─ piers | 配列 | 〇 | 〇 | 要素数 : 橋脚数 |
+| │　 　└─ piers[i] | 辞書 | 〇 | | |
+| │　　　　├─ pos | 実数 | 〇 | | 水平距離 (m)<sup>＃</sup> |
+| │　　　　├─ w | 実数 | 〇 | | 投影幅 (m) |
+| │　　　　└─ Cd | 実数 | 〇 | | 抵抗係数<sup>＃</sup> |
+| ├─ weir | 辞書 | | | 堰<sup>＄</sup> |
+| ├─ dropwork | 辞書 | | | 落差工<sup>＄</sup>|
+| └─ submergedBridge | 辞書 | | | 潜水橋<sup>＄</sup> |
 
 ※ 節点番号は 0 始まり</br>
 ＃ 水位計算用の仮定値なので実態に合わせて確定する必要がある</br>
